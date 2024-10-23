@@ -41,12 +41,14 @@ function App() {
   }, [navigate]);
 
   function PrivateRoute({ isAuth, children }) {
-    if (!isAuth) {
-      navigate("/login");
-    }
-    return children;
-  }
+    useEffect(() => {
+      if (!isAuth) {
+        navigate("/login");
+      }
+    }, [isAuth, navigate]);
 
+    return isAuth ? children : null;
+  }
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <CartContext.Provider value={{ cart, setCart }}>
@@ -64,6 +66,7 @@ function App() {
             element={
               <HeaderLayout>
                 <About></About>
+                
               </HeaderLayout>
             }
           ></Route>
@@ -97,23 +100,24 @@ function App() {
           <Route
             path="/orders"
             element={
-              <PrivateRoute>
-                <HeaderLayout isAuth={!!token}>
-                  <Orders></Orders>
+              <PrivateRoute isAuth={!!token}>
+                <HeaderLayout>
+                  <Orders />
                 </HeaderLayout>
               </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/checkout"
             element={
               <PrivateRoute isAuth={!!token}>
                 <HeaderLayout>
-                  <Checkout></Checkout>
+                  <Checkout />
                 </HeaderLayout>
               </PrivateRoute>
             }
-          ></Route>
+          />
+
           <Route path="*" element={<ErrorPage></ErrorPage>}></Route>
         </Routes>
       </CartContext.Provider>
