@@ -1,4 +1,3 @@
-
 import React, { useContext, useRef, useState } from "react";
 import { CartContext } from "../App";
 import { useNavigate } from "react-router-dom";
@@ -10,18 +9,17 @@ export default function Checkout() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleOrder = () => {
-    setLoading(true);
     setErrorMessage("");
 
     const cartItems = cart.map((item) => ({
       amount: item.amount,
       productID: item.id,
-      price: (item.data.attributes.price / 100).toFixed(2),
+      price: item.data.attributes.price,
       title: item.data.attributes.title,
+      count: item.data.attributes.count,
     }));
 
     const data = {
@@ -30,7 +28,7 @@ export default function Checkout() {
         cartItems: cartItems,
         chargeTotal: "37898",
         name: nameRef.current.value,
-        numItemsInCart: cart.length.toString(),
+        numItemsInCart: cart.length,
         orderTotal: "378",
       },
     };
@@ -43,29 +41,23 @@ export default function Checkout() {
       },
       body: JSON.stringify(data),
     })
-      .then((resp) => resp.json())
-      .then((data) => {
-        if (data.status === 200) {
-          // Cartni tozalash
-          setCart([]);
-          localStorage.removeItem("cart"); // LocalStorage'dan o'chirish
-
-          // Formani tozalash
-          nameRef.current.value = "";
-          addressRef.current.value = "";
-
-          // Orders sahifasiga o'tish
-          navigate("/orders");
-        } else {
-          setErrorMessage("Failed to place order.");
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("Failed to place order.");
         }
+        return resp.json();
+      })
+      .then((data) => {
+        localStorage.setItem("latestOrder", JSON.stringify(data));
+        setCart([]);
+        localStorage.removeItem("cart");
+        nameRef.current.value = "";
+        addressRef.current.value = "";
+        navigate("/orders");
       })
       .catch((error) => {
-        setErrorMessage("Failed to place order. Please try again.");
-        console.error("Error:", error);
-      })
-      .finally(() => {
-        setLoading(false);
+        console.log("Error:", error);
+        setErrorMessage("Error placing order. Please try again.");
       });
   };
 
@@ -109,7 +101,7 @@ export default function Checkout() {
               type="button"
               onClick={handleOrder}
             >
-              {loading ? "PLACING ORDER..." : "PLACE YOUR ORDER"}
+              Handle order
             </button>
           </div>
         </div>
